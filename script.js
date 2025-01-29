@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const versionSelect = document.getElementById('version-select');
     const downloadButton = document.getElementById('download-button');
+    const downloadProgressBar = document.getElementById('download-progress-bar');
+    const downloadProgressText = document.getElementById('download-progress-text');
+    const downloadProgressContainer = document.querySelector('.download-progress');
     const settingsButton = document.querySelector('.settings-button');
     const settingsModal = document.getElementById('settingsModal');
     const closeSettingsButton = document.getElementById('close-settings');
@@ -11,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const particlesJSContainer = document.getElementById('particles-js');
     const body = document.body;
     const registerButton = document.querySelector('.register-button');
-      const registerModalButton = document.querySelector('.register-button-modal');
+    const registerModalButton = document.querySelector('.register-button-modal');
     const loginButton = document.querySelector('.login-button');
     const registerModal = document.getElementById('registerModal');
     const loginModal = document.getElementById('loginModal');
@@ -28,23 +31,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const profileCloseButton = document.querySelector('.profile-close');
     const saveProfileButton = document.getElementById('saveProfileButton');
     const profileUsernameDisplay = document.getElementById('profileUsername');
-      const profileEmailDisplay = document.getElementById('profileEmail');
+    const profileEmailDisplay = document.getElementById('profileEmail');
     const profileSubscriptionDisplay = document.getElementById('profileSubscription');
     const profileNameInput = document.getElementById('profile-name-input');
-       const profileEmailInput = document.getElementById('profile-email-input');
-     const profilePasswordInput = document.getElementById('profile-password-input');
-    const subscriptionStatusDisplay = document.getElementById('subscriptionStatus')
+    const profileEmailInput = document.getElementById('profile-email-input');
+    const profilePasswordInput = document.getElementById('profile-password-input');
+    const subscriptionStatusDisplay = document.getElementById('subscriptionStatus');
     const downloadList = document.getElementById('download-list');
     let optimizedMode = false;
     let startTime = null;
     let intervalId = null;
     let currentTheme = 'red';
-    let userSubscription = 'Free'; // Начальная подписка пользователя
+    let userSubscription = 'Free';
     let userProfile = {
-            username: 'Username',
-            email: 'user@email.com',
-             password: ''
-         };
+        username: 'Username',
+        email: 'user@email.com',
+        password: ''
+    };
+
     // Функция для применения темы из локального хранилища
     function applyTheme(theme) {
         currentTheme = theme;
@@ -56,32 +60,59 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('theme', theme);
     }
 
-     // Функция для обновления данных профиля в личном кабинете
-    function updateProfileDisplay(){
-            profileUsernameDisplay.textContent = userProfile.username;
-            profileEmailDisplay.textContent = userProfile.email;
-              profileSubscriptionDisplay.textContent = userSubscription;
-         }
-       // Функция для отображения менеджера загрузок
-    function addDownloadItem(link, name) {
+    // Функция для обновления данных профиля в личном кабинете
+    function updateProfileDisplay() {
+        profileUsernameDisplay.textContent = userProfile.username;
+        profileEmailDisplay.textContent = userProfile.email;
+        profileSubscriptionDisplay.textContent = userSubscription;
+    }
+
+    // Функция для отображения менеджера загрузок
+    function addDownloadItem(link, name, size) {
         const listItem = document.createElement('li');
-          const nameSpan = document.createElement('span')
-          nameSpan.textContent = name
-         const cancelButton = document.createElement('button')
-            cancelButton.textContent = 'Отменить';
-              cancelButton.addEventListener('click', function(){
-                  listItem.remove()
-                });
-            listItem.appendChild(nameSpan)
-         listItem.appendChild(cancelButton)
-           downloadList.appendChild(listItem)
-     }
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = name;
+        const cancelButton = document.createElement('button');
+        cancelButton.textContent = 'Отменить';
+        cancelButton.addEventListener('click', function() {
+            listItem.remove();
+        });
+        listItem.appendChild(nameSpan);
+        listItem.appendChild(cancelButton);
+        downloadList.appendChild(listItem);
+
+        // Запускаем симуляцию загрузки
+        simulateDownload(link, size, listItem);
+
+    }
+
+    function simulateDownload(link, size, listItem) {
+        let downloaded = 0;
+        const total = parseInt(size.replace(/[^\d]/g, ''), 10); // Извлекаем число из строки размера
+        const interval = setInterval(() => {
+            downloaded += Math.random() * (total / 100) + (total / 200); // Симулируем скорость загрузки
+            if(downloaded >= total) {
+                clearInterval(interval);
+                downloadProgressBar.value = 100;
+                downloadProgressText.textContent = '100%';
+                downloadProgressContainer.style.display = 'none';
+                alert("Загрузка завершена")
+            } else {
+                const percentage = Math.round((downloaded / total) * 100);
+                downloadProgressBar.value = percentage;
+                downloadProgressText.textContent = percentage + '%';
+            }
+        }, 100); // Обновляем прогресс каждые 100ms
+
+    }
+
     // Получение темы из локального хранилища
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme) {
         applyTheme(storedTheme);
         themeSelect.value = storedTheme;
     }
+
     // Обработчик смены темы
     themeSelect.addEventListener('change', function() {
         applyTheme(this.value);
@@ -176,13 +207,13 @@ document.addEventListener('DOMContentLoaded', function() {
         "retina_detect": true
     });
 
-     // Функция для запуска таймера
+    // Функция для запуска таймера
     function startTimer() {
         startTime = Date.now();
         intervalId = setInterval(updateTimer, 60000);
     }
 
-      // Функция для обновления таймера
+    // Функция для обновления таймера
     function updateTimer() {
         if (!startTime) return;
         const elapsedTime = Date.now() - startTime;
@@ -191,79 +222,90 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Функция для отображения панели пользователя
-     function showUserPanel(username,email) {
-          userProfile.username = username
-          userProfile.email = email;
-           updateProfileDisplay();
-         authButtons.style.display = 'none';
-         userPanel.style.display = 'flex';
-           userNameDisplay.textContent = username;
-           subscriptionStatusDisplay.textContent = userSubscription;
+    function showUserPanel(username, email) {
+        userProfile.username = username;
+        userProfile.email = email;
+        updateProfileDisplay();
+        authButtons.style.display = 'none';
+        userPanel.style.display = 'flex';
+        userNameDisplay.textContent = username;
+        subscriptionStatusDisplay.textContent = userSubscription;
         startTimer();
     }
-      loginButton.addEventListener('click', function() {
+
+    loginButton.addEventListener('click', function() {
         loginModal.style.display = 'flex';
     });
-     registerModalButton.addEventListener('click', function(){
-          loginModal.style.display = 'none';
-         registerModal.style.display = 'flex';
-     })
+
+    registerModalButton.addEventListener('click', function() {
+        loginModal.style.display = 'none';
+        registerModal.style.display = 'flex';
+    });
+
     closeAuthButtons.forEach(function(button) {
         button.addEventListener('click', function() {
             const modalId = this.getAttribute('data-modal');
             document.getElementById(modalId).style.display = 'none';
         });
     });
-  profileButton.addEventListener('click', function(){
-      profileModal.style.display = 'flex';
-   });
-   profileCloseButton.addEventListener('click', function(){
+
+    profileButton.addEventListener('click', function() {
+        profileModal.style.display = 'flex';
+    });
+
+    profileCloseButton.addEventListener('click', function() {
         profileModal.style.display = 'none';
-   });
-   saveProfileButton.addEventListener('click', function(){
-        const newName = profileNameInput.value.trim()
-           const newEmail = profileEmailInput.value.trim()
-             const newPassword = profilePasswordInput.value.trim()
-              if(newName){
-                   userProfile.username = newName
-              }
-              if(newEmail){
-                  userProfile.email = newEmail;
-              }
-            if(newPassword){
-                userProfile.password = newPassword
-            }
-           updateProfileDisplay();
-            profileModal.style.display = 'none'
-         });
+    });
+
+    saveProfileButton.addEventListener('click', function() {
+        const newName = profileNameInput.value.trim();
+        const newEmail = profileEmailInput.value.trim();
+        const newPassword = profilePasswordInput.value.trim();
+        if (newName) {
+            userProfile.username = newName;
+        }
+        if (newEmail) {
+            userProfile.email = newEmail;
+        }
+        if (newPassword) {
+            userProfile.password = newPassword;
+        }
+        updateProfileDisplay();
+        profileModal.style.display = 'none';
+    });
 
 
     document.getElementById('registerForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const usernameInput = this.querySelector('input[type="text"]');
-         const emailInput = this.querySelector('input[type="email"]')
+        const emailInput = this.querySelector('input[type="email"]');
         const username = usernameInput.value;
-          const email = emailInput.value;
-        showUserPanel(username,email);
+        const email = emailInput.value;
+        showUserPanel(username, email);
         registerModal.style.display = 'none';
     });
+
     document.getElementById('loginForm').addEventListener('submit', function(event) {
         event.preventDefault();
-           const usernameInput = this.querySelector('input[type="text"]');
+        const usernameInput = this.querySelector('input[type="text"]');
         const username = usernameInput.value;
-          const email = usernameInput.value;
-        showUserPanel(username,email);
+        const email = usernameInput.value;
+        showUserPanel(username, email);
         loginModal.style.display = 'none';
     });
+
     instructionButton.addEventListener('click', function() {
         instructionPanel.classList.toggle('show');
     });
+
     settingsButton.addEventListener('click', function() {
         settingsModal.style.display = 'flex';
     });
+
     closeSettingsButton.addEventListener('click', function() {
         settingsModal.style.display = 'none';
     });
+
     optimizeCheckbox.addEventListener('change', function() {
         optimizedMode = this.checked;
         snowCheckbox.disabled = optimizedMode;
@@ -279,6 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
     snowCheckbox.addEventListener('change', function() {
         if (this.checked && !optimizedMode) {
             particlesJSContainer.classList.add('show');
@@ -286,20 +329,35 @@ document.addEventListener('DOMContentLoaded', function() {
             particlesJSContainer.classList.remove('show');
         }
     });
+
     versionSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const link = selectedOption.getAttribute('data-link');
+        const size = selectedOption.getAttribute('data-size');
+        const description = selectedOption.getAttribute('data-description'); // Добавил получение описания
+
         if (link) {
             downloadButton.removeAttribute('disabled');
-            downloadButton.addEventListener('click', function(){
-                 addDownloadItem(link,selectedOption.textContent)
-                  window.location.href = link;
-                });
+            downloadButton.addEventListener('click', function() {
+                 downloadProgressContainer.style.display = 'block';
+                 addDownloadItem(link, selectedOption.textContent, size);
+            });
+            const versionDescription = document.querySelector('.launcher-window .version-description');
+            if (versionDescription) {
+                versionDescription.textContent = description || 'Описание недоступно';
+            }
+
+            const versionSize = document.querySelector('.launcher-window .version-size');
+            if (versionSize) {
+                versionSize.textContent = `Размер: ${size}`;
+            }
+
         } else {
             downloadButton.setAttribute('disabled', true);
             downloadButton.onclick = null;
         }
     });
+
     userButton.addEventListener('click', function() {
         userInfo.classList.toggle('show');
     });
